@@ -42,7 +42,7 @@ Each summary includes:
 ### 1. Clone the repo
 
 ```bash
-git clone git@github.com:nothingman89/support-issue-analyzer.git
+git clone git@github.com:taner-rdu/support-issue-analyzer.git
 cd support-issue-analyzer
 mkdir issues
 ```

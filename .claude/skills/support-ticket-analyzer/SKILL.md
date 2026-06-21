@@ -41,7 +41,35 @@ project = PARLE AND text ~ "keyword1 keyword2" AND key != ISSUE-KEY ORDER BY cre
 
 Limit to 5 most relevant results. For each related issue, capture: key, summary, status.
 
-### 3. Generate the summary
+### 3. Search Slack for related discussions
+
+Use the Slack MCP to search for messages related to the issue. Use 2-3 keywords from the issue title and description.
+
+Search both public and private channels. For each relevant result, capture:
+- Channel name
+- Message text (snippet)
+- Author
+- Timestamp
+
+Limit to 5 most relevant results.
+
+### 4. Search GitHub for related issues
+
+Use the GitHub MCP to search for open and closed issues in the relevant repository that match keywords from the Jira issue.
+
+Search query example: `login password reset repo:org/repo`
+
+For each relevant result, capture:
+- Issue number
+- Title
+- Status (open/closed)
+- URL
+
+Limit to 5 most relevant results.
+
+If no related issues are found, offer to create a new GitHub issue based on the Jira analysis.
+
+### 5. Generate the summary
 
 Write a structured markdown summary with the following sections:
 
@@ -66,11 +94,21 @@ Write a structured markdown summary with the following sections:
 |-----|---------|--------|
 | PARLE-X | ... | ... |
 
+## Slack Discussions
+| Channel | Author | Date | Snippet |
+|---------|--------|------|---------|
+| #channel | username | date | message snippet |
+
+## GitHub Issues
+| # | Title | Status | URL |
+|---|-------|--------|-----|
+| 123 | Fix login after reset | open | https://... |
+
 ## Comments
 [Include any existing comments on the issue]
 ```
 
-### 4. Write output
+### 6. Write output
 
 Create the directory and file:
 ```
@@ -89,3 +127,8 @@ Confirm to the user when done with the file path.
 - If no related issues are found, say so explicitly in the Related Issues section
 - Keep the Analysis section practical and dev-focused, not generic
 - Do not include the Jira URL or API credentials in the output file
+- If no Slack results are found, say so explicitly in the Slack Discussions section
+- Search Slack even if no related Jira issues are found — engineers often discuss issues there before filing tickets
+- GitHub repository: taner-rdu/parlez
+- When searching GitHub issues, always search taner-rdu/parlez
+- When offering to create a GitHub issue, create it in taner-rdu/parlez
