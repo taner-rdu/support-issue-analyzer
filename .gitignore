@@ -1,3 +1,4 @@
 .env
 issues/
 .mcp.json
+.claude/support-config.json

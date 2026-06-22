@@ -17,6 +17,16 @@ Example: `/support "PARLE-1"`
 
 ## Steps
 
+### 0. Check for an existing analysis
+
+Before fetching anything, check whether `issues/ISSUE-KEY/summary.md` already exists. If it does, read it — this is a re-run, not a first analysis.
+
+From the existing file, note:
+- The `Last analyzed` timestamp (top of the Overview section)
+- The previous `Status`, comment count, and any existing `## Update Log` entries
+
+This file is the baseline you'll diff against once you've re-fetched current state in the steps below.
+
 ### 1. Fetch the target issue
 
 Use the Atlassian MCP to fetch the issue by key. Extract:
@@ -27,8 +37,16 @@ Use the Atlassian MCP to fetch the issue by key. Extract:
 - Reporter
 - Assignee
 - Created date
+- Updated date
 - Labels
 - Comments (if any)
+
+If this is a re-run (step 0 found an existing summary), compare the current state to the baseline:
+- Has `Status` changed?
+- Are there more comments than before? If so, which ones are new?
+- Has the description or any other field changed?
+
+Carry this diff forward — it drives the Update Log entry in step 6.
 
 ### 2. Search for related issues
 
@@ -69,14 +87,40 @@ Limit to 5 most relevant results.
 
 If no related issues are found, offer to create a new GitHub issue based on the Jira analysis.
 
-### 5. Generate the summary
+### 5. Search local repositories for related code and tests
 
-Write a structured markdown summary with the following sections:
+Read `.claude/support-config.json` in the project root. It has the shape:
+
+```json
+{
+  "repos": [
+    { "name": "main-app", "path": "/absolute/path/to/main-app" },
+    { "name": "auth-service", "path": "/absolute/path/to/auth-service-dependency" }
+  ]
+}
+```
+
+If the file does not exist, skip this step and say so explicitly in the Local Repository Findings section (don't fail the run).
+
+For each repo listed, use Grep to search the repo's `path` for 2-3 significant keywords from the issue summary/description. Search across the whole repo, then separately note which matches fall in test files (paths/files matching `test`, `spec`, `__tests__`, `*.test.*`, `*.spec.*`).
+
+For each relevant match, capture:
+- Repo name
+- File path (relative to that repo's root)
+- Whether it's a test file (yes/no)
+- A short snippet of the matching line(s)
+
+Limit to 5 most relevant results per repo. If a repo path in the config doesn't exist on disk, note that explicitly instead of failing the whole step.
+
+### 6. Generate the summary
+
+Write a structured markdown summary with the following sections. All sections except the Update Log always reflect the *current* state of the issue — re-running the skill regenerates them from scratch using the fresh data gathered in steps 1-5, even on a re-run.
 
 ```markdown
 # [ISSUE-KEY] Issue Title
 
 ## Overview
+- **Last analyzed:** [today's date/time]
 - **Status:** 
 - **Priority:** 
 - **Reporter:** 
@@ -104,11 +148,22 @@ Write a structured markdown summary with the following sections:
 |---|-------|--------|-----|
 | 123 | Fix login after reset | open | https://... |
 
+## Local Repository Findings
+| Repo | File | Test File? | Snippet |
+|------|------|------------|---------|
+| main-app | src/auth/login.ts | no | ... |
+| auth-service | tests/reset_password.spec.ts | yes | ... |
+
 ## Comments
 [Include any existing comments on the issue]
+
+## Update Log
+- [today's date/time]: First analysis generated.
 ```
 
-### 6. Write output
+The `## Update Log` section is append-only history, not a regenerated section. On a first-time analysis (no prior summary found in step 0), write a single entry: "First analysis generated." On a re-run, carry forward every existing Update Log entry unchanged, and append one new entry summarizing what changed since the last analysis based on the step 1 diff (e.g. "Status changed from To Do to In Progress. 2 new comments added. New related Jira issue PARLE-7 found."). If nothing changed since the last run, still append an entry: "No changes detected since last analysis."
+
+### 7. Write output
 
 Create the directory and file:
 ```
@@ -117,9 +172,9 @@ issues/ISSUE-KEY/summary.md
 
 Example: `issues/PARLE-1/summary.md`
 
-If the directory already exists, overwrite the summary file.
+If the file already exists, regenerate every section from the fresh data (don't leave stale findings in place), but preserve and extend the `## Update Log` section as described in step 6 — never delete or rewrite past log entries.
 
-Confirm to the user when done with the file path.
+Confirm to the user when done with the file path, and mention briefly what changed if this was a re-run.
 
 ## Notes
 
@@ -132,3 +187,8 @@ Confirm to the user when done with the file path.
 - GitHub repository: taner-rdu/parlez
 - When searching GitHub issues, always search taner-rdu/parlez
 - When offering to create a GitHub issue, create it in taner-rdu/parlez
+- Local repo search is config-driven, not hardcoded — read `.claude/support-config.json` for the list of repos and their absolute paths; this file is gitignored since paths are machine-specific. If it's missing, skip the step gracefully rather than erroring
+- Search local repos even if no GitHub/Slack/Jira results are found — the actual code or tests may be the most direct evidence
+- If no local repo matches are found, say so explicitly in the Local Repository Findings section
+- Re-running `/support` on an issue that already has a summary is expected — always check for and read the existing file first (step 0). Regenerate all current-state sections fresh; never silently skip re-fetching because a summary already exists
+- The Update Log is the one section that's append-only across runs — every other section reflects the latest state and fully replaces what was there before

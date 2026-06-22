@@ -1,0 +1,12 @@
+{
+  "repos": [
+    {
+      "name": "main-app",
+      "path": "/absolute/path/to/your/main-app"
+    },
+    {
+      "name": "auth-service",
+      "path": "/absolute/path/to/your/auth-service-dependency"
+    }
+  ]
+}
