@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__atlassian__jira_get_issue",
+      "mcp__atlassian__jira_search",
+      "mcp__slack__slack_get_channel_history",
+      "mcp__github__search_issues",
+      "mcp__slack__slack_list_channels"
+    ]
+  }
+}
