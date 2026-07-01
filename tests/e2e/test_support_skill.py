@@ -1,5 +1,5 @@
+import json
 import subprocess
-import pytest
 
 from tests.fixtures.jira_fixtures import create_jira_issue, delete_jira_issue
 from tests.fixtures.github_fixtures import create_github_issue, delete_github_issue
@@ -56,15 +56,27 @@ def test_support_skill_correlates_related_issues():
     slack_related = post_slack_message(text=slack_related_message(jira_key))
     slack_unrelated = post_slack_message(text=SLACK_UNRELATED_MESSAGE)
 
-    # result = subprocess.run(
-    #     ["claude", "-p", f"run /support {jira_key}"],
-    #     capture_output=True,
-    #     text=True,
-    # )
-    # assert result.returncode == 0
+    try:
+        result = subprocess.run(
+            ["claude", "-p", f"/support {jira_key}", "--dangerously-skip-permissions"],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"Support skill failed:\n{result.stderr}"
 
-    delete_jira_issue(jira_key)
-    delete_github_issue(github_related["node_id"])
-    delete_github_issue(github_unrelated["node_id"])
-    delete_slack_message(slack_related["channel"], slack_related["ts"])
-    delete_slack_message(slack_unrelated["channel"], slack_unrelated["ts"])
+        validation = subprocess.run(
+            ["claude", "-p", f'/validate "{jira_key}"', "--dangerously-skip-permissions"],
+            capture_output=True,
+            text=True,
+        )
+        assert validation.returncode == 0, f"Validator failed:\n{validation.stderr}"
+
+        data = json.loads(validation.stdout)
+        assert data["valid"] is True, f"Summary invalid: {data.get('missing_sections')}"
+
+    finally:
+        delete_jira_issue(jira_key)
+        delete_github_issue(github_related["node_id"])
+        delete_github_issue(github_unrelated["node_id"])
+        delete_slack_message(slack_related["channel"], slack_related["ts"])
+        delete_slack_message(slack_unrelated["channel"], slack_unrelated["ts"])

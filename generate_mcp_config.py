@@ -2,7 +2,7 @@ import json
 
 from aws import get_secret
 
-# To generate .mcp.json file -> uv run python scripts/generate_mcp_config.py
+# To generate .mcp.json file -> uv run python generate_mcp_config.py
 
 config = {
     "mcpServers": {
@@ -32,6 +32,11 @@ config = {
             "env": {
                 "GITHUB_TOKEN": get_secret("support-analyzer/github-token"),
             },
+        },
+        "summary-validator": {
+            "type": "stdio",
+            "command": "uv",
+            "args": ["run", "python", "mcp-servers/summary-validator.py"],
         },
     }
 }

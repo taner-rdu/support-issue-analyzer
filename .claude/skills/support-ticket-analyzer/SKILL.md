@@ -87,34 +87,9 @@ Limit to 5 most relevant results.
 
 If no related issues are found, offer to create a new GitHub issue based on the Jira analysis.
 
-### 5. Search local repositories for related code and tests
+### 5. Generate the summary
 
-Read `.claude/support-config.json` in the project root. It has the shape:
-
-```json
-{
-  "repos": [
-    { "name": "main-app", "path": "/absolute/path/to/main-app" },
-    { "name": "auth-service", "path": "/absolute/path/to/auth-service-dependency" }
-  ]
-}
-```
-
-If the file does not exist, skip this step and say so explicitly in the Local Repository Findings section (don't fail the run).
-
-For each repo listed, use Grep to search the repo's `path` for 2-3 significant keywords from the issue summary/description. Search across the whole repo, then separately note which matches fall in test files (paths/files matching `test`, `spec`, `__tests__`, `*.test.*`, `*.spec.*`).
-
-For each relevant match, capture:
-- Repo name
-- File path (relative to that repo's root)
-- Whether it's a test file (yes/no)
-- A short snippet of the matching line(s)
-
-Limit to 5 most relevant results per repo. If a repo path in the config doesn't exist on disk, note that explicitly instead of failing the whole step.
-
-### 6. Generate the summary
-
-Write a structured markdown summary with the following sections. All sections except the Update Log always reflect the *current* state of the issue — re-running the skill regenerates them from scratch using the fresh data gathered in steps 1-5, even on a re-run.
+Write a structured markdown summary with the following sections. All sections except the Update Log always reflect the *current* state of the issue — re-running the skill regenerates them from scratch using the fresh data gathered in steps 1-4, even on a re-run.
 
 ```markdown
 # [ISSUE-KEY] Issue Title
@@ -148,12 +123,6 @@ Write a structured markdown summary with the following sections. All sections ex
 |---|-------|--------|-----|
 | 123 | Fix login after reset | open | https://... |
 
-## Local Repository Findings
-| Repo | File | Test File? | Snippet |
-|------|------|------------|---------|
-| main-app | src/auth/login.ts | no | ... |
-| auth-service | tests/reset_password.spec.ts | yes | ... |
-
 ## Comments
 [Include any existing comments on the issue]
 
@@ -163,7 +132,7 @@ Write a structured markdown summary with the following sections. All sections ex
 
 The `## Update Log` section is append-only history, not a regenerated section. On a first-time analysis (no prior summary found in step 0), write a single entry: "First analysis generated." On a re-run, carry forward every existing Update Log entry unchanged, and append one new entry summarizing what changed since the last analysis based on the step 1 diff (e.g. "Status changed from To Do to In Progress. 2 new comments added. New related Jira issue PARLE-7 found."). If nothing changed since the last run, still append an entry: "No changes detected since last analysis."
 
-### 7. Write output
+### 6. Write output
 
 Create the directory and file:
 ```
@@ -187,8 +156,5 @@ Confirm to the user when done with the file path, and mention briefly what chang
 - GitHub repository: taner-rdu/parlez
 - When searching GitHub issues, always search taner-rdu/parlez
 - When offering to create a GitHub issue, create it in taner-rdu/parlez
-- Local repo search is config-driven, not hardcoded — read `.claude/support-config.json` for the list of repos and their absolute paths; this file is gitignored since paths are machine-specific. If it's missing, skip the step gracefully rather than erroring
-- Search local repos even if no GitHub/Slack/Jira results are found — the actual code or tests may be the most direct evidence
-- If no local repo matches are found, say so explicitly in the Local Repository Findings section
 - Re-running `/support` on an issue that already has a summary is expected — always check for and read the existing file first (step 0). Regenerate all current-state sections fresh; never silently skip re-fetching because a summary already exists
 - The Update Log is the one section that's append-only across runs — every other section reflects the latest state and fully replaces what was there before
