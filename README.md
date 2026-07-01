@@ -11,13 +11,13 @@ When a customer issue is escalated from Zendesk to Jira, developers need context
 ```
 
 Claude Code will:
+
 1. Fetch the Jira issue via the Atlassian MCP server
 2. Search for related issues in the same project using keyword matching
 3. Search Slack for related discussions via the Slack MCP server
 4. Search GitHub for related issues via the GitHub MCP server (and offer to file one if nothing matches)
-5. Search local repositories on disk (your main app, dependency repos, etc.) for related code and tests
-6. Generate a structured summary with AI-powered root cause analysis
-7. Write the output to `issues/PARLE-1/summary.md`
+5. Generate a structured summary with AI-powered root cause analysis
+6. Write the output to `issues/PARLE-1/summary.md`
 
 ## Output
 
@@ -28,14 +28,15 @@ issues/
 ```
 
 Each summary includes:
+
 - Issue metadata (status, priority, reporter, assignee)
 - Full description
 - AI-generated analysis with likely root causes and investigation steps
 - Related issues table
 - Slack discussions table
 - GitHub issues table
-- Local repository findings table (matching code/tests across configured repos)
 - Existing comments
+- Update log (append-only across re-runs)
 
 ## Setup
 
@@ -53,7 +54,8 @@ Each summary includes:
 All credentials are stored in AWS Secrets Manager under the `support-analyzer/` prefix. Create the following secrets before running the tool:
 
 | Secret name | Value |
-|---|---|
+| --- | --- |
+| `support-analyzer/anthropic-api-key` | Anthropic API key — generate at https://console.anthropic.com |
 | `support-analyzer/jira-url` | Your Jira instance URL (e.g. `https://your-org.atlassian.net`) |
 | `support-analyzer/jira-username` | Your Jira account email |
 | `support-analyzer/jira-token` | Jira API token — generate at https://id.atlassian.com/manage-profile/security/api-tokens |
@@ -71,33 +73,12 @@ For the Slack bot, invite it to the channel you want it to search and grant it a
 Run the setup script to generate `.mcp.json` automatically from your secrets:
 
 ```bash
-uv run python scripts/generate_mcp_config.py
+uv run python generate_mcp_config.py
 ```
 
 This writes `.mcp.json` to the project root (gitignored). You need valid AWS credentials in your environment — an IAM role, a named profile (`AWS_PROFILE`), or `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` env vars will all work.
 
 After running it, restart Claude Code so it picks up the new servers.
-
-### 2. Configure local repos to search
-
-If you want the analyzer to search your actual codebase(s) — the main app, dependency repos, etc. — for related code and tests, create `.claude/support-config.json` (gitignored, since the paths are specific to your machine). Copy the example and fill in your real paths:
-
-```bash
-cp .claude/support-config.example.json .claude/support-config.json
-```
-
-```json
-{
-  "repos": [
-    { "name": "main-app", "path": "/Users/you/code/main-app" },
-    { "name": "auth-service", "path": "/Users/you/code/auth-service" }
-  ]
-}
-```
-
-Add as many repos as you want searched — the skill loops over all of them. Each repo is searched independently for keywords from the Jira issue, and matches in test files (`*.test.*`, `*.spec.*`, `__tests__/`, etc.) are flagged separately from regular code matches.
-
-If this file is absent, the skill skips local repo search and notes that explicitly in the summary — it won't fail the run.
 
 ### 3. Run
 
@@ -111,9 +92,19 @@ Then use the command:
 /support "PARLE-1"
 ```
 
+## Testing
+
+The e2e test creates real Jira, GitHub, and Slack fixtures, runs the `/support` skill, then validates the output using the `/validate` skill backed by the `summary-validator` MCP server.
+
+```bash
+uv run pytest tests/ -v
+```
+
+CI runs on every push via GitHub Actions using OIDC authentication to AWS — no long-lived credentials stored in GitHub. All secrets are fetched from AWS Secrets Manager at runtime.
+
 ## Roadmap
 
 - **Phase 1** ✅ Jira issue fetch + related issue search + AI summary
 - **Phase 2** ✅ Slack discussion search
 - **Phase 3** ✅ GitHub issues search — match escalation to filed bugs, offer to file new ones
-- **Phase 4** ✅ Local repo analysis — search configured repos (main app, dependencies) for relevant code and tests
+- **Phase 4** ✅ E2E testing with real fixtures and CI via GitHub Actions

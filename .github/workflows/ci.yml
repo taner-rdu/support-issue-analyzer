@@ -8,6 +8,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   markdown-lint:
@@ -34,6 +35,48 @@ jobs:
           path: ./
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Fetch Anthropic API key
+        run: |
+          SECRET=$(aws secretsmanager get-secret-value --secret-id support-analyzer/anthropic-api-key --query SecretString --output text)
+          echo "::add-mask::$SECRET"
+          echo "ANTHROPIC_API_KEY=$SECRET" >> $GITHUB_ENV
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Generate MCP config
+        run: uv run python generate_mcp_config.py
+
+      - name: Install Claude CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run E2E tests
+        run: uv run pytest tests/ --junitxml=report.xml -v
+
+      - name: Publish test report
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: report.xml
 
   snyk:
     name: Snyk Security Scan

@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 
 from tests.fixtures.jira_fixtures import create_jira_issue, delete_jira_issue
@@ -71,7 +72,9 @@ def test_support_skill_correlates_related_issues():
         )
         assert validation.returncode == 0, f"Validator failed:\n{validation.stderr}"
 
-        data = json.loads(validation.stdout)
+        match = re.search(r'\{.*\}', validation.stdout, re.DOTALL)
+        assert match, f"No JSON found in validator output:\n{validation.stdout}"
+        data = json.loads(match.group())
         assert data["valid"] is True, f"Summary invalid: {data.get('missing_sections')}"
 
     finally:
