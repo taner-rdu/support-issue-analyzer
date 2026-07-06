@@ -1,6 +1,8 @@
 import asyncio
 import importlib.util
+import logging
 import subprocess
+import time
 from pathlib import Path
 
 from tests.fixtures.jira_fixtures import create_jira_issue, delete_jira_issue
@@ -14,6 +16,8 @@ _spec = importlib.util.spec_from_file_location(
 )
 summary_validator = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(summary_validator)
+
+logger = logging.getLogger(__name__)
 
 
 JIRA_SUMMARY = "Translation fails for long paragraphs in DeepL integration"
@@ -59,27 +63,51 @@ def slack_related_message(jira_key: str) -> str:
 
 def test_support_skill_correlates_related_issues():
     jira_key = create_jira_issue(summary=JIRA_SUMMARY, description=JIRA_DESCRIPTION)
+    logger.info(f"Created Jira issue {jira_key}")
 
     github_related = create_github_issue(title=GITHUB_RELATED_TITLE, body=GITHUB_RELATED_BODY)
     github_unrelated = create_github_issue(title=GITHUB_UNRELATED_TITLE, body=GITHUB_UNRELATED_BODY)
+    logger.info(
+        f"Created GitHub issues: related #{github_related['number']}, "
+        f"unrelated #{github_unrelated['number']}"
+    )
 
     slack_related = post_slack_message(text=slack_related_message(jira_key))
     slack_unrelated = post_slack_message(text=SLACK_UNRELATED_MESSAGE)
+    logger.info(
+        f"Posted Slack messages: related ts={slack_related['ts']}, "
+        f"unrelated ts={slack_unrelated['ts']} in channel {slack_related['channel']}"
+    )
 
     try:
+        logger.info(f"Running /support {jira_key} via claude CLI (this can take a few minutes)")
+        start = time.monotonic()
         result = subprocess.run(
             ["claude", "-p", f"/support {jira_key}", "--dangerously-skip-permissions"],
             capture_output=True,
             text=True,
         )
+        logger.info(
+            f"claude exited with code {result.returncode} after {time.monotonic() - start:.0f}s"
+        )
+        logger.info(f"claude output:\n{result.stdout.strip()}")
+        if result.stderr.strip():
+            logger.warning(f"claude stderr:\n{result.stderr.strip()}")
         assert result.returncode == 0, f"Support skill failed:\n{result.stderr}"
 
         data = asyncio.run(summary_validator.validate_summary(jira_key))
+        logger.info(
+            f"Validation result: valid={data.get('valid')}, "
+            f"word_count={data.get('word_count')}, "
+            f"missing_sections={data.get('missing_sections')}"
+        )
         assert data["valid"] is True, f"Summary invalid: {data.get('missing_sections') or data.get('error')}"
 
     finally:
+        logger.info(f"Cleaning up fixtures for {jira_key}")
         delete_jira_issue(jira_key)
         delete_github_issue(github_related["node_id"])
         delete_github_issue(github_unrelated["node_id"])
         delete_slack_message(slack_related["channel"], slack_related["ts"])
         delete_slack_message(slack_unrelated["channel"], slack_unrelated["ts"])
+        logger.info("Cleanup complete")
