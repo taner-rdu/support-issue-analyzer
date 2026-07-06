@@ -48,20 +48,30 @@ GITHUB_UNRELATED_BODY = (
     "is clearing cookies manually."
 )
 
+# Written to read like an organic engineer report that predates the ticket:
+# no issue key, symptom keywords only. If it restates the ticket or is posted
+# after it, the analyzer flags it as seed data instead of corroboration.
+SLACK_RELATED_MESSAGE = (
+    "seeing a bunch of user reports that translation just spins forever "
+    "on long paragraphs — short stuff works fine. anyone else seeing "
+    "DeepL requests hang on big payloads?"
+)
+
 SLACK_UNRELATED_MESSAGE = (
     "anyone know why the staging deploy is stuck on the auth-service "
     "build? been sitting at 80% for like 20 minutes"
 )
 
 
-def slack_related_message(jira_key: str) -> str:
-    return (
-        f"hey did anyone look into {jira_key} yet? users are reporting "
-        "translations just hang forever on longer text, seems pretty bad"
+def test_support_skill_correlates_related_issues():
+    # Slack messages go out first so the "discussion" predates the ticket
+    slack_related = post_slack_message(text=SLACK_RELATED_MESSAGE, username="alex.chen")
+    slack_unrelated = post_slack_message(text=SLACK_UNRELATED_MESSAGE, username="priya.nair")
+    logger.info(
+        f"Posted Slack messages: related ts={slack_related['ts']}, "
+        f"unrelated ts={slack_unrelated['ts']} in channel {slack_related['channel']}"
     )
 
-
-def test_support_skill_correlates_related_issues():
     jira_key = create_jira_issue(summary=JIRA_SUMMARY, description=JIRA_DESCRIPTION)
     logger.info(f"Created Jira issue {jira_key}")
 
@@ -70,13 +80,6 @@ def test_support_skill_correlates_related_issues():
     logger.info(
         f"Created GitHub issues: related #{github_related['number']}, "
         f"unrelated #{github_unrelated['number']}"
-    )
-
-    slack_related = post_slack_message(text=slack_related_message(jira_key))
-    slack_unrelated = post_slack_message(text=SLACK_UNRELATED_MESSAGE)
-    logger.info(
-        f"Posted Slack messages: related ts={slack_related['ts']}, "
-        f"unrelated ts={slack_unrelated['ts']} in channel {slack_related['channel']}"
     )
 
     try:
