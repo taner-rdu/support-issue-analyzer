@@ -36,7 +36,7 @@ config = {
         "summary-validator": {
             "type": "stdio",
             "command": "uv",
-            "args": ["run", "python", "mcp-servers/summary-validator.py"],
+            "args": ["run", "python", "mcp_servers/summary_validator.py"],
         },
     }
 }

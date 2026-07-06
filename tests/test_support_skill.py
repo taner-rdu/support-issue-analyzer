@@ -1,21 +1,12 @@
 import asyncio
-import importlib.util
 import logging
 import subprocess
 import time
-from pathlib import Path
 
+from mcp_servers.summary_validator import validate_summary
 from tests.fixtures.jira_fixtures import create_jira_issue, delete_jira_issue
 from tests.fixtures.github_fixtures import create_github_issue, delete_github_issue
 from tests.fixtures.slack_fixtures import post_slack_message, delete_slack_message
-
-# mcp-servers/summary-validator.py isn't an importable package path, so load it by file
-_spec = importlib.util.spec_from_file_location(
-    "summary_validator",
-    Path(__file__).resolve().parent.parent / "mcp-servers" / "summary-validator.py",
-)
-summary_validator = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(summary_validator)
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +89,7 @@ def test_support_skill_correlates_related_issues():
             logger.warning(f"claude stderr:\n{result.stderr.strip()}")
         assert result.returncode == 0, f"Support skill failed:\n{result.stderr}"
 
-        data = asyncio.run(summary_validator.validate_summary(jira_key))
+        data = asyncio.run(validate_summary(jira_key))
         logger.info(
             f"Validation result: valid={data.get('valid')}, "
             f"word_count={data.get('word_count')}, "
