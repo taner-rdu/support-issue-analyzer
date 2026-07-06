@@ -7,5 +7,6 @@
       "mcp__github__search_issues",
       "mcp__slack__slack_list_channels"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true
 }
