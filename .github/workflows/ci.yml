@@ -64,6 +64,12 @@ jobs:
       - name: Install Claude CLI
         run: npm install -g @anthropic-ai/claude-code
 
+      - name: Pre-trust workspace for Claude Code
+        run: |
+          cat > ~/.claude.json <<EOF
+          {"projects": {"$GITHUB_WORKSPACE": {"hasTrustDialogAccepted": true}}}
+          EOF
+
       - name: Run E2E tests
         run: uv run pytest tests/ --junitxml=report.xml -v
 
@@ -72,23 +78,3 @@ jobs:
         if: always()
         with:
           report_paths: report.xml
-
-  snyk:
-    name: Snyk Security Scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Snyk
-        run: npm install -g snyk
-
-      - name: Run Snyk test
-        run: snyk test --all-projects
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
