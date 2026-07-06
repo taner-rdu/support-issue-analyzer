@@ -1,5 +1,5 @@
 ---
-name: summary-validator
+name: validate
 description: Validate a generated support issue summary using the summary-validator MCP tool. Use when the user runs /validate followed by a Jira issue key (e.g. /validate "PARLE-1").
 ---
 

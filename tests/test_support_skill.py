@@ -1,10 +1,19 @@
-import json
-import re
+import asyncio
+import importlib.util
 import subprocess
+from pathlib import Path
 
 from tests.fixtures.jira_fixtures import create_jira_issue, delete_jira_issue
 from tests.fixtures.github_fixtures import create_github_issue, delete_github_issue
 from tests.fixtures.slack_fixtures import post_slack_message, delete_slack_message
+
+# mcp-servers/summary-validator.py isn't an importable package path, so load it by file
+_spec = importlib.util.spec_from_file_location(
+    "summary_validator",
+    Path(__file__).resolve().parent.parent / "mcp-servers" / "summary-validator.py",
+)
+summary_validator = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(summary_validator)
 
 
 JIRA_SUMMARY = "Translation fails for long paragraphs in DeepL integration"
@@ -65,17 +74,8 @@ def test_support_skill_correlates_related_issues():
         )
         assert result.returncode == 0, f"Support skill failed:\n{result.stderr}"
 
-        validation = subprocess.run(
-            ["claude", "-p", f'/validate "{jira_key}"', "--dangerously-skip-permissions"],
-            capture_output=True,
-            text=True,
-        )
-        assert validation.returncode == 0, f"Validator failed:\n{validation.stderr}"
-
-        match = re.search(r'\{.*\}', validation.stdout, re.DOTALL)
-        assert match, f"No JSON found in validator output:\n{validation.stdout}"
-        data = json.loads(match.group())
-        assert data["valid"] is True, f"Summary invalid: {data.get('missing_sections')}"
+        data = asyncio.run(summary_validator.validate_summary(jira_key))
+        assert data["valid"] is True, f"Summary invalid: {data.get('missing_sections') or data.get('error')}"
 
     finally:
         delete_jira_issue(jira_key)

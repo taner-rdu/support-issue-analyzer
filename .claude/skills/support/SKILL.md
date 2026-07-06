@@ -1,5 +1,5 @@
 ---
-name: jira-support-analyzer
+name: support
 description: Analyze a Jira support escalation issue and generate a structured summary. Use this skill whenever the user runs /support followed by a Jira issue key (e.g. /support "PARLE-1"), or asks to analyze, summarize, or investigate a Jira issue. Also triggers when the user wants to understand the context of a support escalation, find related issues, or generate a summary file for a Jira ticket.
 ---
 
