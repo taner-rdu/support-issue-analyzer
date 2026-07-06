@@ -100,7 +100,7 @@ The e2e test creates real Jira, GitHub, and Slack fixtures, runs the `/support` 
 uv run pytest tests/ -v
 ```
 
-CI runs on every push via GitHub Actions using OIDC authentication to AWS — no long-lived credentials stored in GitHub. All secrets are fetched from AWS Secrets Manager at runtime.
+CI runs on every pull request (and on demand via manual dispatch) using GitHub Actions with OIDC authentication to AWS — no long-lived credentials stored in GitHub. All secrets are fetched from AWS Secrets Manager at runtime.
 
 ## Roadmap
 
