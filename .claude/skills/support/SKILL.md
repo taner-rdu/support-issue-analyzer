@@ -79,9 +79,14 @@ uv run python -c "from aws import get_secret; print(get_secret('support-analyzer
 ```
 Use the printed value as `repo` for the rest of this step.
 
-Use the GitHub MCP to search for open and closed issues in that repository that match keywords from the Jira issue.
+Use the GitHub MCP to list open and closed issues (state=all) in that repository — do not use
+issue search, since GitHub's search index can lag behind newly created issues by up to a minute
+or more, causing recently filed issues to be missed. Fetching the full issue list instead reads
+directly from the repository and has no such delay.
 
-Search query example: `login password reset repo:org/repo`
+From the listed issues, identify which ones are relevant by comparing their title/body against
+the Jira issue's summary and description — same underlying symptom, same feature area, or same
+root cause, not just shared words.
 
 For each relevant result, capture:
 - Issue number
