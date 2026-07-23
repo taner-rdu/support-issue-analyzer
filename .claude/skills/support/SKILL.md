@@ -73,7 +73,13 @@ Limit to 5 most relevant results.
 
 ### 4. Search GitHub for related issues
 
-Use the GitHub MCP to search for open and closed issues in the relevant repository that match keywords from the Jira issue.
+First determine the target repository by running (via the Bash tool, from the project root):
+```bash
+uv run python -c "from aws import get_secret; print(get_secret('support-analyzer/github-test-issue-repo'))"
+```
+Use the printed value as `repo` for the rest of this step.
+
+Use the GitHub MCP to search for open and closed issues in that repository that match keywords from the Jira issue.
 
 Search query example: `login password reset repo:org/repo`
 
@@ -153,8 +159,6 @@ Confirm to the user when done with the file path, and mention briefly what chang
 - Do not include the Jira URL or API credentials in the output file
 - If no Slack results are found, say so explicitly in the Slack Discussions section
 - Search Slack even if no related Jira issues are found — engineers often discuss issues there before filing tickets
-- GitHub repository: taner-rdu/parlez
-- When searching GitHub issues, always search taner-rdu/parlez
-- When offering to create a GitHub issue, create it in taner-rdu/parlez
+- Determine the GitHub repository to search/file issues in by fetching the `support-analyzer/github-test-issue-repo` secret at runtime (see step 4) — never hardcode a repo name
 - Re-running `/support` on an issue that already has a summary is expected — always check for and read the existing file first (step 0). Regenerate all current-state sections fresh; never silently skip re-fetching because a summary already exists
 - The Update Log is the one section that's append-only across runs — every other section reflects the latest state and fully replaces what was there before
