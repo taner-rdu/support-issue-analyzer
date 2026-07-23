@@ -30,7 +30,7 @@ config = {
             "command": "npx",
             "args": ["-y", "@modelcontextprotocol/server-github"],
             "env": {
-                "GITHUB_TOKEN": get_secret("support-analyzer/github-token"),
+                "GITHUB_PERSONAL_ACCESS_TOKEN": get_secret("support-analyzer/github-token"),
             },
         },
         "summary-validator": {
