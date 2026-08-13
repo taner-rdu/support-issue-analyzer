@@ -1,11 +1,11 @@
 import httpx
 
-from aws import get_secret
+from config import get_secret
 
-JIRA_URL = get_secret("support-analyzer/jira-url")
-JIRA_EMAIL = get_secret("support-analyzer/jira-username")
-JIRA_TOKEN = get_secret("support-analyzer/jira-token")
-JIRA_PROJECT_KEY = get_secret("support-analyzer/jira-project-key")
+JIRA_URL = get_secret("JIRA_URL")
+JIRA_EMAIL = get_secret("JIRA_USERNAME")
+JIRA_TOKEN = get_secret("JIRA_API_TOKEN")
+JIRA_PROJECT_KEY = get_secret("JIRA_PROJECT_KEY")
 
 
 def create_jira_issue(summary: str, description: str) -> str:

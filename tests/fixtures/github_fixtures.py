@@ -1,9 +1,9 @@
 import httpx
 
-from aws import get_secret
+from config import get_secret
 
-GITHUB_TOKEN = get_secret("support-analyzer/github-token")
-GITHUB_REPO = get_secret("support-analyzer/github-test-issue-repo")
+GITHUB_TOKEN = get_secret("SUPPORT_GITHUB_TOKEN")
+GITHUB_REPO = get_secret("GH_TEST_ISSUE_REPO")
 GITHUB_API = "https://api.github.com"
 HEADERS = {
     "Authorization": f"token {GITHUB_TOKEN}",

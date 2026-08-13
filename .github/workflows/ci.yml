@@ -34,23 +34,21 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
       checks: write
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      JIRA_URL: ${{ secrets.JIRA_URL }}
+      JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
+      JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+      JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
+      SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
+      SUPPORT_GITHUB_TOKEN: ${{ secrets.SUPPORT_GITHUB_TOKEN }}
+      GH_TEST_ISSUE_REPO: ${{ secrets.GH_TEST_ISSUE_REPO }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
-
-      - name: Fetch Anthropic API key
-        run: |
-          SECRET=$(aws secretsmanager get-secret-value --secret-id support-analyzer/anthropic-api-key --query SecretString --output text)
-          echo "::add-mask::$SECRET"
-          echo "ANTHROPIC_API_KEY=$SECRET" >> $GITHUB_ENV
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5

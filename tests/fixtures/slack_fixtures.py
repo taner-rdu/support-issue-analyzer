@@ -2,10 +2,10 @@ import logging
 
 import httpx
 
-from aws import get_secret
+from config import get_secret
 
-SLACK_TOKEN = get_secret("support-analyzer/slack-bot-token")
-SLACK_CHANNEL = get_secret("support-analyzer/slack-channel")
+SLACK_TOKEN = get_secret("SLACK_BOT_TOKEN")
+SLACK_CHANNEL = get_secret("SLACK_CHANNEL")
 HEADERS = {"Authorization": f"Bearer {SLACK_TOKEN}"}
 
 logger = logging.getLogger(__name__)
