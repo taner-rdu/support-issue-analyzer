@@ -46,7 +46,7 @@ jobs:
       SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
       SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
       SUPPORT_GITHUB_TOKEN: ${{ secrets.SUPPORT_GITHUB_TOKEN }}
-      GITHUB_TEST_ISSUE_REPO: ${{ secrets.GITHUB_TEST_ISSUE_REPO }}
+      GH_TEST_ISSUE_REPO: ${{ secrets.GH_TEST_ISSUE_REPO }}
     steps:
       - uses: actions/checkout@v4
 

@@ -58,7 +58,7 @@ cp .env.example .env
 | `SLACK_TEAM_ID` | Slack workspace team ID |
 | `SLACK_CHANNEL` | Slack channel name to search (e.g. `support`) |
 | `SUPPORT_GITHUB_TOKEN` | GitHub personal access token with `repo` scope — generate at https://github.com/settings/tokens |
-| `GITHUB_TEST_ISSUE_REPO` | GitHub repo to search/file issues against, and used for e2e test fixtures (e.g. `your-org/your-repo`) |
+| `GH_TEST_ISSUE_REPO` | GitHub repo to search/file issues against, and used for e2e test fixtures (e.g. `your-org/your-repo`) |
 | `ANTHROPIC_API_KEY` | Only needed for headless (`claude -p`) runs, e.g. the e2e tests — not required for interactive local use if you're already logged in to Claude Code |
 
 For the Slack bot, invite it to the channel you want it to search and grant it at minimum the `channels:history`, `channels:read`, `groups:history`, `groups:read`, `search:read.public`, and `search:read.private` scopes. Add `users:read` and `users.profile:read` if you want author names resolved instead of raw user IDs.
