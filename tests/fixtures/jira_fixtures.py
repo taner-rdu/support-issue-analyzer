@@ -1,6 +1,6 @@
 import httpx
 
-from aws import get_secret
+from config import get_secret
 
 JIRA_URL = get_secret("support-analyzer/jira-url")
 JIRA_EMAIL = get_secret("support-analyzer/jira-username")

@@ -40,34 +40,40 @@ A second skill, backed by a custom `summary-validator` MCP server, checks a gene
 - A Slack app/bot token with access to the channels you want searched
 - A GitHub personal access token with `repo` scope (for searching and filing issues)
 
-### 1. Add secrets to AWS Secrets Manager
+### 1. Configure credentials
 
-All credentials are stored in AWS Secrets Manager under the `support-analyzer/` prefix. Create the following secrets before running the tool:
+Copy the example env file and fill in your values:
 
-| Secret name | Value |
+```bash
+cp .env.example .env
+```
+
+| Variable | Value |
 | --- | --- |
-| `support-analyzer/anthropic-api-key` | Anthropic API key — generate at https://console.anthropic.com |
-| `support-analyzer/jira-url` | Your Jira instance URL (e.g. `https://your-org.atlassian.net`) |
-| `support-analyzer/jira-username` | Your Jira account email |
-| `support-analyzer/jira-token` | Jira API token — generate at https://id.atlassian.com/manage-profile/security/api-tokens |
-| `support-analyzer/jira-project-key` | Jira project key to search (e.g. `MYPROJECT`) |
-| `support-analyzer/slack-bot-token` | Slack bot token (`xoxb-...`) — create a bot at https://api.slack.com/apps |
-| `support-analyzer/slack-team-id` | Slack workspace team ID |
-| `support-analyzer/slack-channel` | Slack channel name to search (e.g. `support`) |
-| `support-analyzer/github-token` | GitHub personal access token with `repo` scope — generate at https://github.com/settings/tokens |
-| `support-analyzer/github-test-issue-repo` | GitHub repo to search/file issues against, and used for e2e test fixtures (e.g. `your-org/your-repo`) |
+| `JIRA_URL` | Your Jira instance URL (e.g. `https://your-org.atlassian.net`) |
+| `JIRA_USERNAME` | Your Jira account email |
+| `JIRA_API_TOKEN` | Jira API token — generate at https://id.atlassian.com/manage-profile/security/api-tokens |
+| `JIRA_PROJECT_KEY` | Jira project key to search (e.g. `MYPROJECT`) |
+| `SLACK_BOT_TOKEN` | Slack bot token (`xoxb-...`) — create a bot at https://api.slack.com/apps |
+| `SLACK_TEAM_ID` | Slack workspace team ID |
+| `SLACK_CHANNEL` | Slack channel name to search (e.g. `support`) |
+| `SUPPORT_GITHUB_TOKEN` | GitHub personal access token with `repo` scope — generate at https://github.com/settings/tokens |
+| `GITHUB_TEST_ISSUE_REPO` | GitHub repo to search/file issues against, and used for e2e test fixtures (e.g. `your-org/your-repo`) |
+| `ANTHROPIC_API_KEY` | Only needed for headless (`claude -p`) runs, e.g. the e2e tests — not required for interactive local use if you're already logged in to Claude Code |
 
 For the Slack bot, invite it to the channel you want it to search and grant it at minimum the `channels:history`, `channels:read`, `groups:history`, `groups:read`, `search:read.public`, and `search:read.private` scopes. Add `users:read` and `users.profile:read` if you want author names resolved instead of raw user IDs.
 
+`.env` is gitignored and read locally via `python-dotenv`. CI instead reads the same variables from GitHub Actions repository secrets (see [Testing](#testing)).
+
 ### 2. Generate MCP config
 
-Run the setup script to generate `.mcp.json` automatically from your secrets:
+Run the setup script to generate `.mcp.json` from your `.env`:
 
 ```bash
 uv run python generate_mcp_config.py
 ```
 
-This writes `.mcp.json` to the project root (gitignored). You need valid AWS credentials in your environment — an IAM role, a named profile (`AWS_PROFILE`), or `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` env vars will all work.
+This writes `.mcp.json` to the project root (gitignored).
 
 After running it, restart Claude Code so it picks up the new servers.
 
@@ -91,11 +97,11 @@ The e2e test creates real Jira, GitHub, and Slack fixtures (an issue, two candid
 uv run pytest tests/ -v
 ```
 
-CI runs on every pull request (and on demand via manual dispatch) using GitHub Actions with OIDC authentication to AWS — no long-lived credentials stored in GitHub. All secrets are fetched from AWS Secrets Manager at runtime. The pipeline also runs markdown linting and secret scanning (TruffleHog) on every PR.
+CI runs on every pull request (and on demand via manual dispatch) using GitHub Actions. Credentials are stored as encrypted GitHub Actions repository secrets and injected as environment variables for the job — see `.env.example` for the full list of variable names to set under Settings → Secrets and variables → Actions. The pipeline also runs markdown linting and secret scanning (TruffleHog) on every PR.
 
 ## Tech Stack
 
-Python · [Model Context Protocol](https://modelcontextprotocol.io/) (Atlassian, Slack, GitHub MCP servers + a custom-built validator server) · Claude Code skills · AWS Secrets Manager · GitHub Actions (OIDC) · pytest
+Python · [Model Context Protocol](https://modelcontextprotocol.io/) (Atlassian, Slack, GitHub MCP servers + a custom-built validator server) · Claude Code skills · GitHub Actions · pytest
 
 ## Roadmap
 

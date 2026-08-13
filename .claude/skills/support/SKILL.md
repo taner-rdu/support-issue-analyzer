@@ -75,7 +75,7 @@ Limit to 5 most relevant results.
 
 First determine the target repository by running (via the Bash tool, from the project root):
 ```bash
-uv run python -c "from aws import get_secret; print(get_secret('support-analyzer/github-test-issue-repo'))"
+uv run python -c "from config import get_secret; print(get_secret('support-analyzer/github-test-issue-repo'))"
 ```
 Use the printed value as `repo` for the rest of this step.
 

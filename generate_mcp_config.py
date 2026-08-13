@@ -1,6 +1,6 @@
 import json
 
-from aws import get_secret
+from config import get_secret
 
 # To generate .mcp.json file -> uv run python generate_mcp_config.py
 
