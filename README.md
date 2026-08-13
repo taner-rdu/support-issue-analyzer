@@ -2,7 +2,7 @@
 
 An agentic Claude Code toolkit that turns a Jira support escalation into a fully-researched developer briefing — correlating Jira, Slack, and GitHub in one command.
 
-When a customer issue gets escalated, developers waste time hunting across four different tools just to figure out if this has happened before. This project automates that legwork: it fetches the Jira issue, correlates it against related Jira tickets, Slack threads, and GitHub issues, and writes out a structured markdown briefing with AI-generated root cause analysis — ready for a developer to act on immediately.
+When a customer issue gets escalated, developers waste time hunting across Jira, Slack, and GitHub just to figure out if this has happened before. This project automates that legwork: it fetches the Jira issue, correlates it against related Jira tickets, Slack threads, and GitHub issues, and writes out a structured markdown briefing with AI-generated root cause analysis — ready for a developer to act on immediately.
 
 It's built as a small suite of Claude Code skills backed by MCP servers, with a custom-built validator server and an end-to-end test suite that exercises the whole pipeline against real Jira/Slack/GitHub fixtures.
 
@@ -27,7 +27,7 @@ Each summary includes issue metadata, the full description, AI-generated analysi
 /validate "PARLE-1"
 ```
 
-A second skill, backed by a custom `summary-validator` MCP server, checks a generated summary for structural completeness (all required sections present) and reports word count — used both for manual spot-checks and as the pass/fail gate in the e2e test suite.
+A second skill, backed by a custom `summary-validator` MCP server, checks a generated summary for structural completeness (all required sections present) and reports word count. It's also used as the pass/fail gate in the e2e test suite.
 
 ## Setup
 
@@ -85,7 +85,7 @@ Then use the command:
 
 ## Testing
 
-The e2e test creates real Jira, GitHub, and Slack fixtures (an issue, two candidate GitHub issues — one related, one not — and two Slack messages), runs the `/support` skill against them, then validates the output via the `/validate` skill's `summary-validator` MCP server. It asserts the skill correctly correlates the related fixtures and ignores the unrelated ones, not just that it produces output.
+The e2e test creates real Jira, GitHub, and Slack fixtures (an issue, two candidate GitHub issues — one related, one not — and two Slack messages), runs the `/support` skill against them, then validates the output via the `/validate` skill's `summary-validator` MCP server, which checks that the generated summary has all required sections.
 
 ```bash
 uv run pytest tests/ -v
@@ -103,4 +103,4 @@ Python · [Model Context Protocol](https://modelcontextprotocol.io/) (Atlassian,
 - **Phase 2** ✅ Slack discussion search
 - **Phase 3** ✅ GitHub issues search — match escalation to filed bugs, offer to file new ones
 - **Phase 4** ✅ E2E testing with real fixtures and CI via GitHub Actions
-- **Phase 5** Analyze local codebase alongside external sources
+- **Phase 5** Analyze local code base
