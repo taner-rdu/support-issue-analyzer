@@ -75,7 +75,7 @@ Limit to 5 most relevant results.
 
 First determine the target repository by running (via the Bash tool, from the project root):
 ```bash
-uv run python -c "from config import get_secret; print(get_secret('support-analyzer/github-test-issue-repo'))"
+uv run python -c "from config import get_secret; print(get_secret('GITHUB_TEST_ISSUE_REPO'))"
 ```
 Use the printed value as `repo` for the rest of this step.
 
@@ -164,6 +164,6 @@ Confirm to the user when done with the file path, and mention briefly what chang
 - Do not include the Jira URL or API credentials in the output file
 - If no Slack results are found, say so explicitly in the Slack Discussions section
 - Search Slack even if no related Jira issues are found — engineers often discuss issues there before filing tickets
-- Determine the GitHub repository to search/file issues in by fetching the `support-analyzer/github-test-issue-repo` secret at runtime (see step 4) — never hardcode a repo name
+- Determine the GitHub repository to search/file issues in by fetching the `GITHUB_TEST_ISSUE_REPO` environment variable at runtime (see step 4) — never hardcode a repo name
 - Re-running `/support` on an issue that already has a summary is expected — always check for and read the existing file first (step 0). Regenerate all current-state sections fresh; never silently skip re-fetching because a summary already exists
 - The Update Log is the one section that's append-only across runs — every other section reflects the latest state and fully replaces what was there before

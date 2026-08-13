@@ -11,9 +11,9 @@ config = {
             "command": "uvx",
             "args": ["mcp-atlassian"],
             "env": {
-                "JIRA_URL": get_secret("support-analyzer/jira-url"),
-                "JIRA_USERNAME": get_secret("support-analyzer/jira-username"),
-                "JIRA_API_TOKEN": get_secret("support-analyzer/jira-token"),
+                "JIRA_URL": get_secret("JIRA_URL"),
+                "JIRA_USERNAME": get_secret("JIRA_USERNAME"),
+                "JIRA_API_TOKEN": get_secret("JIRA_API_TOKEN"),
             },
         },
         "slack": {
@@ -21,8 +21,8 @@ config = {
             "command": "npx",
             "args": ["-y", "@modelcontextprotocol/server-slack"],
             "env": {
-                "SLACK_BOT_TOKEN": get_secret("support-analyzer/slack-bot-token"),
-                "SLACK_TEAM_ID": get_secret("support-analyzer/slack-team-id"),
+                "SLACK_BOT_TOKEN": get_secret("SLACK_BOT_TOKEN"),
+                "SLACK_TEAM_ID": get_secret("SLACK_TEAM_ID"),
             },
         },
         "github": {
@@ -30,7 +30,7 @@ config = {
             "command": "npx",
             "args": ["-y", "@modelcontextprotocol/server-github"],
             "env": {
-                "GITHUB_PERSONAL_ACCESS_TOKEN": get_secret("support-analyzer/github-token"),
+                "GITHUB_PERSONAL_ACCESS_TOKEN": get_secret("SUPPORT_GITHUB_TOKEN"),
             },
         },
         "summary-validator": {
