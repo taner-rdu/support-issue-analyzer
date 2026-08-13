@@ -1,8 +1,10 @@
 # Support Issue Analyzer
 
-A Claude Code skill that analyzes Jira support escalation issues and generates structured developer briefings.
+An agentic Claude Code toolkit that turns a Jira support escalation into a fully-researched developer briefing — correlating Jira, Slack, and GitHub in one command.
 
-When a customer issue is escalated from Zendesk to Jira, developers need context fast. This tool fetches the Jira issue, searches for related tickets, and produces a markdown summary with root cause analysis and investigation steps — all from a single command.
+When a customer issue gets escalated, developers waste time hunting across Jira, Slack, and GitHub just to figure out if this has happened before. This project automates that legwork: it fetches the Jira issue, correlates it against related Jira tickets, Slack threads, and GitHub issues, and writes out a structured markdown briefing with AI-generated root cause analysis — ready for a developer to act on immediately.
+
+It's built as a small suite of Claude Code skills backed by MCP servers, with a custom-built validator server and an end-to-end test suite that exercises the whole pipeline against real Jira/Slack/GitHub fixtures.
 
 ## How It Works
 
@@ -13,30 +15,19 @@ When a customer issue is escalated from Zendesk to Jira, developers need context
 Claude Code will:
 
 1. Fetch the Jira issue via the Atlassian MCP server
-2. Search for related issues in the same project using keyword matching
+2. Search for related issues in the same project via JQL keyword search
 3. Search Slack for related discussions via the Slack MCP server
-4. Search GitHub for related issues via the GitHub MCP server (and offer to file one if nothing matches)
+4. Search GitHub for related issues via the GitHub MCP server, correlating on symptom and root cause rather than shared keywords — and offer to file a new issue if nothing matches
 5. Generate a structured summary with AI-powered root cause analysis
 6. Write the output to `issues/PARLE-1/summary.md`
 
-## Output
+Each summary includes issue metadata, the full description, AI-generated analysis (likely root cause, impact, investigation steps), tables of related Jira/Slack/GitHub findings, existing comments, and an append-only update log — so re-running `/support` on an issue that's since changed status or picked up new comments produces a diff-aware update instead of a duplicate report.
 
 ```
-issues/
-└── PARLE-1/
-    └── summary.md
+/validate "PARLE-1"
 ```
 
-Each summary includes:
-
-- Issue metadata (status, priority, reporter, assignee)
-- Full description
-- AI-generated analysis with likely root causes and investigation steps
-- Related issues table
-- Slack discussions table
-- GitHub issues table
-- Existing comments
-- Update log (append-only across re-runs)
+A second skill, backed by a custom `summary-validator` MCP server, checks a generated summary for structural completeness (all required sections present) and reports word count. It's also used as the pass/fail gate in the e2e test suite.
 
 ## Setup
 
@@ -64,7 +55,7 @@ All credentials are stored in AWS Secrets Manager under the `support-analyzer/` 
 | `support-analyzer/slack-team-id` | Slack workspace team ID |
 | `support-analyzer/slack-channel` | Slack channel name to search (e.g. `support`) |
 | `support-analyzer/github-token` | GitHub personal access token with `repo` scope — generate at https://github.com/settings/tokens |
-| `support-analyzer/github-test-issue-repo` | GitHub repo used for e2e test issues (e.g. `your-org/your-repo`) |
+| `support-analyzer/github-test-issue-repo` | GitHub repo to search/file issues against, and used for e2e test fixtures (e.g. `your-org/your-repo`) |
 
 For the Slack bot, invite it to the channel you want it to search and grant it at minimum the `channels:history`, `channels:read`, `groups:history`, `groups:read`, `search:read.public`, and `search:read.private` scopes. Add `users:read` and `users.profile:read` if you want author names resolved instead of raw user IDs.
 
@@ -94,13 +85,17 @@ Then use the command:
 
 ## Testing
 
-The e2e test creates real Jira, GitHub, and Slack fixtures, runs the `/support` skill, then validates the output using the `/validate` skill backed by the `summary-validator` MCP server.
+The e2e test creates real Jira, GitHub, and Slack fixtures (an issue, two candidate GitHub issues — one related, one not — and two Slack messages), runs the `/support` skill against them, then validates the output via the `/validate` skill's `summary-validator` MCP server, which checks that the generated summary has all required sections.
 
 ```bash
 uv run pytest tests/ -v
 ```
 
-CI runs on every pull request (and on demand via manual dispatch) using GitHub Actions with OIDC authentication to AWS — no long-lived credentials stored in GitHub. All secrets are fetched from AWS Secrets Manager at runtime.
+CI runs on every pull request (and on demand via manual dispatch) using GitHub Actions with OIDC authentication to AWS — no long-lived credentials stored in GitHub. All secrets are fetched from AWS Secrets Manager at runtime. The pipeline also runs markdown linting and secret scanning (TruffleHog) on every PR.
+
+## Tech Stack
+
+Python · [Model Context Protocol](https://modelcontextprotocol.io/) (Atlassian, Slack, GitHub MCP servers + a custom-built validator server) · Claude Code skills · AWS Secrets Manager · GitHub Actions (OIDC) · pytest
 
 ## Roadmap
 
